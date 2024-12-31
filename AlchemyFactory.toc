@@ -1,0 +1,5 @@
+## Interface: 30300
+## Title: Alchemy Factory
+## Notes: Auto Withdraw Mats for Alchemist and Jwcs using GBank for daily cds
+## Version: 0.1
+AlchemyFactory.lua
