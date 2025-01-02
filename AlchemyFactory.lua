@@ -1,82 +1,253 @@
--- TODO: Might use DB instead of tables
+AlchemyFactory = LibStub("AceAddon-3.0"):NewAddon("AlchemyFactory", "AceConsole-3.0", "AceEvent-3.0", "AceTimer-3.0")
 
--- mats = {
---     43102 = {
---         name = "Frozen Orb"
---     }
--- }
+local delay = 0
 
+-- available classes
+AlchemyFactory.UTILS = {}
 
--- ID Mapping
--- Icy Prism
-FROZEN_ORB = 43102
-CHALCEDONY = 36923
-DARK_JADE = 36932
-SHADOW_CRYSTAL = 36926
--- Rare gems 
-SCARLET_RUBY = 36918
-AUTUMNS_GLOW = 36921
-MONARCH_TOPAZ = 36930
-TWILIGHT_OPAL = 36927
-FOREST_EMERALD = 36933
-SKY_SAPPHIRE = 36924
--- Elements
-ETERNAL_FIRE = 36860
-ETERNAL_LIFE = 35625
-ETERNAL_SHADOW = 35627
-ETERNAL_AIR = 35623
-
--- Products
--- Epic Gems
-CARDINAL_RUBY = 36919
-KINGS_AMBER = 36922
-AMETRINE = 36931
-DREADSTONE = 36928
-EYE_OF_ZUL = 36934
-MAJESTIC_ZIRCON = 36925
-DRAGONS_EYE = 42225
-
--- Recipes
-ICY_PRISM_RECIPE = {
-    {FROZEN_ORB, 1},
-    {CHALCEDONY, 1},
-    {DARK_JADE, 1},
-    {SHADOW_CRYSTAL, 1}
+AlchemyFactory.CONSTANT = {
+    GUILDBANK = {
+        SHORT = 'G',
+        BAGSLOTS = {
+            1, 2, 3, 4, 5, 6
+        },
+        MAX_GUILDBANK_SLOTS_PER_TAB = 98
+    },
+    ITEM = {
+        FROZEN_ORB = {
+            name = 'Frozen Orb',
+            ID = 43102
+        },
+        CHALCEDONY = {
+            name = 'Chalcedony',
+            ID = 36923
+        },
+        DARK_JADE = {
+            name = 'Dark Jade',
+            ID = 36932
+        },
+        SHADOW_CRYSTAL = {
+            name = 'Shadow Crystal',
+            ID = 36926
+        },
+        SCARLET_RUBY = {
+            name = 'Scarlet Ruby',
+            ID = 36918
+        },
+        AUTUMNS_GLOW = {
+            name = 'Autumn\'s Glow',
+            ID = 36921
+        },
+        MONARCH_TOPAZ = {
+            name = 'Monarch Topaz',
+            ID = 36930
+        },
+        TWILIGHT_OPAL = {
+            name = 'Twilight Opal',
+            ID = 36927
+        },
+        FOREST_EMERALD = {
+            name = 'Forest Emerald',
+            ID = 36933
+        },
+        SKY_SAPPHIRE = {
+            name = 'Sky Sapphire',
+            ID = 36924
+        },
+        -- Elements
+        ETERNAL_FIRE = {
+            name = 'Eternal Fire',
+            ID = 36860
+        },
+        ETERNAL_LIFE = {
+            name = 'Eternal Life',
+            ID = 35625
+        },
+        ETERNAL_SHADOW = {
+            name = 'Eternal Shadow',
+            ID = 35627
+        },
+        ETERNAL_AIR = {
+            name = 'Eternal Air',
+            ID = 35623
+        },
+        -- Products (Epic Gems)
+        CARDINAL_RUBY = {
+            name = 'Cardinal Ruby',
+            ID = 36919
+        },
+        KINGS_AMBER = {
+            name = 'King\'s Amber',
+            ID = 36922
+        },
+        AMETRINE = {
+            name = 'Ametrine',
+            ID = 36931
+        },
+        DREADSTONE = {
+            name = 'Dreadstone',
+            ID = 36928
+        },
+        EYE_OF_ZUL = {
+            name = 'Eye of Zul',
+            ID = 36934
+        },
+        MAJESTIC_ZIRCON = {
+            name = 'Majestic Zircon',
+            ID = 36925
+        },
+        DRAGONS_EYE = {
+            name = 'Dragon\'s Eye',
+            ID = 42225
+        }
+    },
+    ROLES = {
+        JA = {
+            name = 'Jewelcrafting & Alchemy',
+            short = 'JA'
+        },
+        A = {
+            name = 'Alchemy',
+            short = 'A'
+        },
+        J = {
+            name = 'Jewelcrafting',
+            short = 'J'
+        }
+    }
 }
 
--- TODO: Add a function to manually change prio order in-game or auto (e.g. using ah prices for gem crafts)
--- { item_id, quantity } instead of recipe per epic gem transmutation
-PriorityList = {
-    {SCARLET_RUBY, 1},
-    {AUTUMNS_GLOW, 1},
-    {MONARCH_TOPAZ, 1},
-    {TWILIGHT_OPAL, 1},
-    {SKY_SAPPHIRE, 1},
-    {FOREST_EMERALD, 3},
+AlchemyFactory.CONSTANT.RECIPE = {    
+    ICY_PRISM = {
+        name = 'Icy Prism',
+        mats = {
+            -- itemId, quantity
+            {AlchemyFactory.CONSTANT.ITEM.FROZEN_ORB.ID, 1},
+            {AlchemyFactory.CONSTANT.ITEM.CHALCEDONY.ID, 1},
+            {AlchemyFactory.CONSTANT.ITEM.DARK_JADE.ID, 1},
+            {AlchemyFactory.CONSTANT.ITEM.SHADOW_CRYSTAL.ID, 1},
+        }
+    },
+    CARDINAL_RUBY = {
+        name = 'Transmute: Cardinal Ruby',
+        mats = {                
+            {AlchemyFactory.CONSTANT.ITEM.SCARLET_RUBY.ID, 1},
+            {AlchemyFactory.CONSTANT.ITEM.ETERNAL_FIRE.ID, 1},
+        }
+    },
+    KINGS_AMBER = {
+        name = 'Transmute: King\'s Amber',
+        mats = {                
+            {AlchemyFactory.CONSTANT.ITEM.AUTUMNS_GLOW.ID, 1},
+            {AlchemyFactory.CONSTANT.ITEM.ETERNAL_LIFE.ID, 1},
+        }
+    },
+    AMETRINE = {
+        name = 'Transmute: Ametrine',
+        mats = {                
+            {AlchemyFactory.CONSTANT.ITEM.MONARCH_TOPAZ.ID, 1},
+            {AlchemyFactory.CONSTANT.ITEM.ETERNAL_SHADOW.ID, 1},
+        }
+    },
+    DREADSTONE = {
+        name = 'Transmute: Dreadstone',
+        mats = {                
+            {AlchemyFactory.CONSTANT.ITEM.TWILIGHT_OPAL.ID, 1},
+            {AlchemyFactory.CONSTANT.ITEM.ETERNAL_SHADOW.ID, 1},
+        }
+    },
+    MAJESTIC_ZIRCON = {
+        name = 'Transmute: Majestic Zircon',
+        mats = {                
+            {AlchemyFactory.CONSTANT.ITEM.SKY_SAPPHIRE.ID, 1},
+            {AlchemyFactory.CONSTANT.ITEM.ETERNAL_AIR.ID, 1},
+        }
+    },
+    EYE_OF_ZUL = {
+        name = 'Transmute: Eye of Zul',
+        mats = {                
+            {AlchemyFactory.CONSTANT.ITEM.FOREST_EMERALD.ID, 3},            
+        }
+    }
 }
 
-local function search_item_in_gbank(item_id, quantity)        
-    local n_tabs = GetNumGuildBankTabs()
-    local n_slots = 98
-    for tab = 1,n_tabs
-    do                
-        for slot = 1,n_slots
+local defaults = {
+    global = {
+        GB_SlotCooldown = 0,
+        GB_TransmutationPriorityList = {
+            AlchemyFactory.CONSTANT.RECIPE.CARDINAL_RUBY,
+            AlchemyFactory.CONSTANT.RECIPE.KINGS_AMBER,
+            AlchemyFactory.CONSTANT.RECIPE.AMETRINE,
+            AlchemyFactory.CONSTANT.RECIPE.TWILIGHT_OPAL,
+            AlchemyFactory.CONSTANT.RECIPE.MAJESTIC_ZIRCON,
+            AlchemyFactory.CONSTANT.RECIPE.EYE_OF_ZUL,
+        }
+    }
+}
+
+function AlchemyFactory:OnInitialize()
+    self:Print("AlchemyFactory initialized.")
+    
+    self:RegisterChatCommand("af", "SlashCommand")
+
+    self.db = LibStub("AceDB-3.0"):New("AlchemyFactoryDB", defaults, true)    
+end
+
+function AlchemyFactory:OnEnable()
+    
+end
+
+function AlchemyFactory:OnDisable()
+    
+end
+
+function AlchemyFactory:SlashCommand(msg)
+    if msg == "ja" then
+        self:Print("Withdrawing JwC/Alch mats.")
+        AlchemyFactory:WithdrawJAMats()
+    elseif msg == "a" then
+        self:Print("Withdrawing Alchemy mats.")
+        AlchemyFactory:WithdrawAMats()
+    elseif msg == "j" then
+        self:Print("Withdrawing JwC mats.")
+        AlchemyFactory:WithdrawJMats()
+    end
+end
+
+function AlchemyFactory:SearchItemInGBank(itemID, quantity)
+    local nTabs = GetNumGuildBankTabs()
+    local nSlots = AlchemyFactory.CONSTANT.GUILDBANK.MAX_GUILDBANK_SLOTS_PER_TAB
+    
+    for t = 1,nTabs
+    do
+        for s = 1,nSlots
         do
-            local _, count, locked = GetGuildBankItemInfo(tab, slot)            
-            local item = GetGuildBankItemLink(tab, slot)
+            local _, count, locked = GetGuildBankItemInfo(t, s)            
+            local item = GetGuildBankItemLink(t, s)
             -- Item is found by id and count is enough
             if count ~= 0 then                
-                if string.find(item, item_id) and count >= quantity then                
-                    return {item_id, quantity, tab, slot}
+                if string.find(item, itemID) and count >= quantity then                
+                    return {itemID, quantity, t, s}
                 end
             end
+            
         end
     end
-    -- print("Item not found.")
     return false
 end
 
-local function pickup_on_container_empty_slot ()
+function AlchemyFactory.UTILS.CalcGBDelay()
+    if AlchemyFactory.db then delay = tonumber(AlchemyFactory.db.global.GB_SlotCooldown) end
+    local down, up, lag = GetNetStats()
+    if lag > 0 then lag = (3*lag/1000) + 0.2 + delay
+    
+    else
+        lag = 2
+    end
+    return lag    
+end
+
+function AlchemyFactory:PickupOnContainerEmptySlot()
     for i = 0,4
     do
         for j = 2,GetContainerNumSlots(i)
@@ -86,86 +257,116 @@ local function pickup_on_container_empty_slot ()
                 break
             end
         end
-    end    
+    end   
+end
+
+function AlchemyFactory:TableConcat(t1, t2)
+    for i=1,#t2
+    do
+        t1[#t1+1] = t2[i]
+    end
+    return t1
 end
 
 
-local function withdraw_jalch_mats ()
-    local withdraw_list = {}
-    
-    -- Iterate through priority list also checking for pair matches such as Scarlet Ruby and Eternal Fire
-    for i = 1,#PriorityList
-    do
-        local is_last_iteration = i == #PriorityList
-        local item_id, quantity = unpack(PriorityList[i])
-        local rare_gem_found = search_item_in_gbank(item_id, quantity)        
-        
-        local the_other_one = nil
-        if rare_gem_found then            
-           
-            if item_id == SCARLET_RUBY then
-                the_other_one = search_item_in_gbank(ETERNAL_FIRE, quantity)                            
-            elseif item_id == AUTUMNS_GLOW then
-                the_other_one = search_item_in_gbank(ETERNAL_LIFE, quantity)
-            elseif item_id == MONARCH_TOPAZ then
-                the_other_one = search_item_in_gbank(ETERNAL_SHADOW, quantity)                
-            elseif item_id == TWILIGHT_OPAL then
-                the_other_one = search_item_in_gbank(ETERNAL_SHADOW, quantity)
-            elseif item_id == SKY_SAPPHIRE then
-                the_other_one = search_item_in_gbank(ETERNAL_AIR, quantity)
-            elseif item_id == FOREST_EMERALD then
-                table.insert(withdraw_list, rare_gem_found)                
-                break
-            else
-                error(string.format("Unhandled case (%s)", item_id), 2)
-                break
-            end
-        end        
+function AlchemyFactory:DoWithdrawItemFromGuildBank(list)    
+    if #list > 0 then
+        local itemID, q, t, s = unpack(list[#list])
+        SplitGuildBankItem(t, s, q)
+        AlchemyFactory:PickupOnContainerEmptySlot()
+        table.remove(list)
+        AlchemyFactory:ScheduleTimer("DoWithdrawItemFromGuildBank", AlchemyFactory.UTILS.CalcGBDelay(), list)
+    else
+        AlchemyFactory:Print("Operation Done.")
+        return false
+    end
+    return true
+end
 
-      
-        if the_other_one then            
-            table.insert(withdraw_list, rare_gem_found)
-            table.insert(withdraw_list, the_other_one)
+function AlchemyFactory:WithdrawJAMats()    
+    local jList = AlchemyFactory:GetJWithdrawList()
+    local aList = AlchemyFactory:GetAWithdrawList()
+
+    local withdrawList = AlchemyFactory:TableConcat(aList, jList)
+    -- print list
+    -- for i = 1, #withdrawList
+    -- do        
+    --     AlchemyFactory:Print(withdrawList[i][1], withdrawList[i][2])
+    -- end
+
+    AlchemyFactory:DoWithdrawItemFromGuildBank(withdrawList)
+end
+
+
+function AlchemyFactory:WithdrawAMats()
+    local withdrawList = AlchemyFactory:GetAWithdrawList()
+    AlchemyFactory:DoWithdrawItemFromGuildBank(withdrawList)
+end
+
+function AlchemyFactory:WithdrawJMats()
+    local withdrawList = AlchemyFactory:GetJWithdrawList()
+    AlchemyFactory:DoWithdrawItemFromGuildBank(withdrawList)
+    
+end
+
+function AlchemyFactory:GetJWithdrawList()
+    local recipe = AlchemyFactory.CONSTANT.RECIPE.ICY_PRISM
+    local list = {}
+    for i=1,#recipe.mats
+    do
+        local itemID, quantity = unpack(recipe.mats[i])        
+        local foundItem = AlchemyFactory:SearchItemInGBank(itemID, quantity)
+
+        if not foundItem then
+            list = {}
+            error("Not enough materials for Icy Prism craft.", 2)
+        end
+        
+        table.insert(list, foundItem)
+    end
+    
+    return list
+end
+
+function AlchemyFactory:GetAWithdrawList()
+    local prioList = AlchemyFactory.db.global.GB_TransmutationPriorityList
+    local withdrawList = {}
+
+    for i=1,#prioList
+    do
+        local isLastIteration = i == #prioList
+        local recipe = prioList[i]
+        local matsFound = {} -- contains results from searching items through recipes' mats. Used to verify if all of the mats from a recipe exist before adding them to the withdrawing list.
+        local match = true -- assuming there is a match (all mats needed for craft exists) we will add them to the withdrawing list and break from the prioList loop
+
+        for j=1,#recipe.mats
+        do
+            local itemID, quantity = unpack(recipe.mats[j])
+            local foundItem = AlchemyFactory:SearchItemInGBank(itemID, quantity)
+
+            table.insert(matsFound, foundItem)
+        end
+
+        for j=1,#matsFound
+        do
+            local result = matsFound[j]
+            if not result then
+                match = false
+                if isLastIteration then
+                    error("Not enough materials for Transmutation.", 2)                                    
+                end
+            end
+        end
+
+        if match then
+            for j=1,#matsFound
+            do
+                table.insert(withdrawList, matsFound[j])
+            end
+
             break
         end
-   
-        if is_last_iteration then
-            error("Insuficient materials.")
-        end        
     end
-    
-    
-    for i = 1,#ICY_PRISM_RECIPE
-    do
-        local mat = ICY_PRISM_RECIPE[i]
-        local item_id, quantity = unpack(mat)
-        local mat_found = search_item_in_gbank(item_id, quantity)
-        if not mat_found then            
-            error("Insuficient JWC mats.", 2)            
-        end        
-        table.insert(withdraw_list, mat_found)
-    end    
-    for i = 1,#withdraw_list
-    do
-        local _, quantity, tab, slot = unpack(withdraw_list[i])        
-        AutoStoreGuildBankItem(tab, slot)
-        -- SplitGuildBankItem(tab, slot, quantity)
-        -- pickup_on_container_empty_slot()        
-    end
+
+    return withdrawList
 end
-
-
-SLASH_ALCHEMYFACTORY1 = '/alfa';
-local function handler(msg, editBox)
-    if msg == 'jwc' then
-        print("Withdraw jwcs")
-    elseif msg == 'alch' then
-        print("Withdraw alch")
-    elseif msg == 'jalch' then
-        withdraw_jalch_mats()
-    else
-        print("Invalid option for /alfa. Try options jwc, alch or jalch")
-    end
-end
-
-SlashCmdList["ALCHEMYFACTORY"] = handler;
