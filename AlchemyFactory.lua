@@ -211,6 +211,12 @@ function AlchemyFactory:SlashCommand(msg)
     elseif msg == "j" then
         self:Print("Withdrawing JwC mats.")
         AlchemyFactory:WithdrawJMats()
+    elseif msg == "t" then
+        AlchemyFactory:Transmute()
+    elseif msg == "ip" then
+        AlchemyFactory:CraftIcyPrism()
+    elseif msg == "d" then
+        AlchemyFactory:DepositProducts()
     end
 end
 
@@ -235,6 +241,43 @@ function AlchemyFactory:SearchItemInGBank(itemID, quantity)
     end
     return false
 end
+
+function AlchemyFactory:SearchItemInSlot(itemID, b, s)    
+    if itemID == GetContainerItemID(b,s) then                
+        return {b, s}
+    end
+    return false
+end
+
+function AlchemyFactory:SearchProductInSlot(productsList, b, s)
+    for i = 1,#productsList
+    do
+        local itemID = productsList[i]        
+        local itemFound = AlchemyFactory:SearchItemInSlot(itemID, b, s)
+        if itemFound then
+            return itemFound
+        end
+    end
+    return false
+end
+
+function AlchemyFactory:SearchProductsInContainer(productsList)
+    local foundProducts = {}
+    for b = 0,4
+    do
+        for s = 1,GetContainerNumSlots(b)
+        do
+            if GetContainerItemID(b,s) then
+                local pos = AlchemyFactory:SearchProductInSlot(productsList, b, s)
+                if pos then
+                    table.insert(foundProducts, pos)
+                end
+            end
+        end
+    end
+    return foundProducts
+end
+
 
 function AlchemyFactory.UTILS.CalcGBDelay()
     if AlchemyFactory.db then delay = tonumber(AlchemyFactory.db.global.GB_SlotCooldown) end
@@ -268,7 +311,6 @@ function AlchemyFactory:TableConcat(t1, t2)
     return t1
 end
 
-
 function AlchemyFactory:DoWithdrawItemFromGuildBank(list)    
     if #list > 0 then
         local itemID, q, t, s = unpack(list[#list])
@@ -277,7 +319,7 @@ function AlchemyFactory:DoWithdrawItemFromGuildBank(list)
         table.remove(list)
         AlchemyFactory:ScheduleTimer("DoWithdrawItemFromGuildBank", AlchemyFactory.UTILS.CalcGBDelay(), list)
     else
-        AlchemyFactory:Print("Operation Done.")
+        AlchemyFactory:Print("Withdraw Done.")
         return false
     end
     return true
@@ -305,8 +347,7 @@ end
 
 function AlchemyFactory:WithdrawJMats()
     local withdrawList = AlchemyFactory:GetJWithdrawList()
-    AlchemyFactory:DoWithdrawItemFromGuildBank(withdrawList)
-    
+    AlchemyFactory:DoWithdrawItemFromGuildBank(withdrawList)    
 end
 
 function AlchemyFactory:GetJWithdrawList()
@@ -369,4 +410,78 @@ function AlchemyFactory:GetAWithdrawList()
     end
 
     return withdrawList
+end
+
+function AlchemyFactory:Transmute()
+    local prioList = AlchemyFactory.db.global.GB_TransmutationPriorityList
+     
+    for i = 1,#prioList
+    do
+        local craftName = prioList[i].name
+        TradeSkillOnlyShowMakeable(true)
+        for j = 1,GetNumTradeSkills()
+        do
+            if GetTradeSkillInfo(j) == craftName then
+                CloseTradeSkill()
+                DoTradeSkill(j)
+                return
+            end
+        end
+    end    
+end
+
+function AlchemyFactory:CraftIcyPrism()
+    local craftName = AlchemyFactory.CONSTANT.RECIPE.ICY_PRISM.name
+    TradeSkillOnlyShowMakeable(true)
+    for i = 0,GetNumTradeSkills()
+    do  
+        if GetTradeSkillInfo(i) == craftName then
+            CloseTradeSkill()
+            DoTradeSkill(i)
+            return
+        end
+    end
+end
+
+function AlchemyFactory:PickupOnGuildBankCurrentTabEmptySlot()
+    local nSlots = AlchemyFactory.CONSTANT.GUILDBANK.MAX_GUILDBANK_SLOTS_PER_TAB
+    local currTab = GetCurrentGuildBankTab()
+    for s = 1,nSlots
+    do                  
+        local item = GetGuildBankItemLink(currTab, s)
+        if not item then                
+            PickupGuildBankItem(currTab, s)
+            break
+        end        
+    end        
+end
+
+function AlchemyFactory:DoDepositIntoGuildBank(list)    
+    if #list > 0 then
+        local b, s = unpack(list[#list])
+        UseContainerItem(b,s)
+        -- ClearCursor()
+        -- PickupContainerItem(b,s)
+        -- AlchemyFactory:PickupOnGuildBankCurrentTabEmptySlot()
+        table.remove(list)
+        AlchemyFactory:ScheduleTimer("DoDepositIntoGuildBank", AlchemyFactory.UTILS.CalcGBDelay(), list)
+    else
+        AlchemyFactory:Print("Deposit Done.")
+        return false
+    end
+    return true
+end
+
+function AlchemyFactory:DepositProducts()
+    local items = AlchemyFactory.CONSTANT.ITEM
+    local productsItemIDs = {}
+    for k, v in pairs(items)
+    do
+        local itemID = v.ID
+        table.insert(productsItemIDs, itemID)                
+    end
+    
+    local products = AlchemyFactory:SearchProductsInContainer(productsItemIDs)
+    AlchemyFactory:DoDepositIntoGuildBank(products)
+
 end
