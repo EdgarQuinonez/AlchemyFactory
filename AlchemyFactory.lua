@@ -178,7 +178,7 @@ local defaults = {
             AlchemyFactory.CONSTANT.RECIPE.CARDINAL_RUBY,
             AlchemyFactory.CONSTANT.RECIPE.KINGS_AMBER,
             AlchemyFactory.CONSTANT.RECIPE.AMETRINE,
-            AlchemyFactory.CONSTANT.RECIPE.TWILIGHT_OPAL,
+            AlchemyFactory.CONSTANT.RECIPE.DREADSTONE,
             AlchemyFactory.CONSTANT.RECIPE.MAJESTIC_ZIRCON,
             AlchemyFactory.CONSTANT.RECIPE.EYE_OF_ZUL,
         }
@@ -217,6 +217,10 @@ function AlchemyFactory:SlashCommand(msg)
         AlchemyFactory:CraftIcyPrism()
     elseif msg == "d" then
         AlchemyFactory:DepositProducts()
+    elseif msg == "deg" then
+        AlchemyFactory:DepositEpicGemsToGuildBank()
+    elseif msg == "weg" then
+        AlchemyFactory:WithdrawEpicGemsFromGuildBank()
     end
 end
 
@@ -231,7 +235,7 @@ function AlchemyFactory:SearchItemInGBank(itemID, quantity)
             local _, count, locked = GetGuildBankItemInfo(t, s)            
             local item = GetGuildBankItemLink(t, s)
             -- Item is found by id and count is enough
-            if count ~= 0 then                
+            if count ~= 0 and not locked then                
                 if string.find(item, itemID) and count >= quantity then                
                     return {itemID, quantity, t, s}
                 end
@@ -285,7 +289,7 @@ function AlchemyFactory.UTILS.CalcGBDelay()
     if lag > 0 then lag = (3*lag/1000) + 0.2 + delay
     
     else
-        lag = 2
+        lag = 0.2
     end
     return lag    
 end
@@ -460,6 +464,7 @@ function AlchemyFactory:DoDepositIntoGuildBank(list)
     if #list > 0 then
         local b, s = unpack(list[#list])
         UseContainerItem(b,s)
+        -- i thought UseContainerItem was protected but it's fine to use
         -- ClearCursor()
         -- PickupContainerItem(b,s)
         -- AlchemyFactory:PickupOnGuildBankCurrentTabEmptySlot()
@@ -484,4 +489,87 @@ function AlchemyFactory:DepositProducts()
     local products = AlchemyFactory:SearchProductsInContainer(productsItemIDs)
     AlchemyFactory:DoDepositIntoGuildBank(products)
 
+end
+
+function AlchemyFactory:DoWithdrawByItemNameListGuildBank(args)
+    local itemNames, currSlot = unpack(args)
+    local currTab = GetCurrentGuildBankTab()
+    local nSlots = AlchemyFactory.CONSTANT.GUILDBANK.MAX_GUILDBANK_SLOTS_PER_TAB
+    
+
+    if currSlot <= nSlots then        
+        local itemLink = GetGuildBankItemLink(currTab, currSlot)
+        if itemLink then            
+            for i = 1,#itemNames
+            do            
+                local name = itemNames[i]                            
+                if string.find(itemLink, name) then
+                    -- match                
+                    AutoStoreGuildBankItem(currTab, currSlot)
+                    AlchemyFactory:ScheduleTimer("DoWithdrawByItemNameListGuildBank", AlchemyFactory.UTILS.CalcGBDelay(), {itemNames, currSlot + 1})
+                    return true
+                end                                      
+            end
+            -- not empty, no match
+            AlchemyFactory:DoWithdrawByItemNameListGuildBank({itemNames, currSlot + 1})
+        else
+            -- empty
+            AlchemyFactory:DoWithdrawByItemNameListGuildBank({itemNames, currSlot + 1})
+        end
+    else
+        AlchemyFactory:Print("Withdraw Done.")
+        return false
+    end    
+end
+
+function AlchemyFactory:WithdrawEpicGemsFromGuildBank()
+    local items = AlchemyFactory.CONSTANT.ITEM
+    local stringsToMatch = {items.CARDINAL_RUBY.name, items.KINGS_AMBER.name, items.AMETRINE.name, items.DREADSTONE.name, items.EYE_OF_ZUL.name, items.MAJESTIC_ZIRCON.name, items.DRAGONS_EYE.name }
+
+    AlchemyFactory:DoWithdrawByItemNameListGuildBank({stringsToMatch, 1})    
+end
+
+function AlchemyFactory:DoDepositByItemNameListIntoGuildBank(args)
+    local itemNames, currBag, currSlot = unpack(args)
+    if not itemNames then
+        error("Item list to deposit was not provided.", 2)
+    end
+    if currBag <= 4 then
+        local bagSlots = GetContainerNumSlots(currBag)
+        local itemLink = GetContainerItemLink(currBag,currSlot)
+        local bagIncrement = 0
+        local slotIncrement = 1
+        
+        if currSlot >= bagSlots then
+            bagIncrement = 1
+            slotIncrement = -bagSlots - 1
+        end
+
+        if itemLink then                       
+            for i = 1,#itemNames
+            do            
+                local name = itemNames[i]        
+                if string.find(itemLink, name) then
+                    UseContainerItem(currBag,currSlot)
+                    AlchemyFactory:ScheduleTimer("DoDepositByItemNameListIntoGuildBank", AlchemyFactory.UTILS.CalcGBDelay(), {itemNames, currBag + bagIncrement, currSlot + slotIncrement} )
+                    return true
+                end            
+            end
+            -- not empty, no item match
+            AlchemyFactory:DoDepositByItemNameListIntoGuildBank({itemNames, currBag + bagIncrement, currSlot + slotIncrement})         
+        else
+            -- empty slot
+            AlchemyFactory:DoDepositByItemNameListIntoGuildBank({itemNames, currBag + bagIncrement, currSlot + slotIncrement})
+        end
+    else
+        AlchemyFactory:Print("Deposit Done.")
+        return false
+    end         
+end
+
+function AlchemyFactory:DepositEpicGemsToGuildBank()
+    local items = AlchemyFactory.CONSTANT.ITEM
+    local stringsToMatch = {items.CARDINAL_RUBY.name, items.KINGS_AMBER.name, items.AMETRINE.name, items.DREADSTONE.name, items.EYE_OF_ZUL.name, items.MAJESTIC_ZIRCON.name, items.DRAGONS_EYE.name }
+
+    AlchemyFactory:DoDepositByItemNameListIntoGuildBank({stringsToMatch, 0, 1})
 end
