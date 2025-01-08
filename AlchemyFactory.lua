@@ -286,10 +286,9 @@ end
 function AlchemyFactory.UTILS.CalcGBDelay()
     if AlchemyFactory.db then delay = tonumber(AlchemyFactory.db.global.GB_SlotCooldown) end
     local down, up, lag = GetNetStats()
-    if lag > 0 then lag = (3*lag/1000) + 0.2 + delay
-    
+    if lag > 0 then lag = (3*lag/1000) + 0.2 + delay            
     else
-        lag = 0.2
+        lag = 0.677
     end
     return lag    
 end
