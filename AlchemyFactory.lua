@@ -288,7 +288,7 @@ function AlchemyFactory.UTILS.CalcGBDelay()
     local down, up, lag = GetNetStats()
     if lag > 0 then lag = (3*lag/1000) + 0.2 + delay            
     else
-        lag = 0.677
+        lag = 0.35
     end
     return lag    
 end
@@ -425,8 +425,9 @@ function AlchemyFactory:Transmute()
         for j = 1,GetNumTradeSkills()
         do
             if GetTradeSkillInfo(j) == craftName then
-                CloseTradeSkill()
+                SelectTradeSkill(j)
                 DoTradeSkill(j)
+                CloseTradeSkill()
                 return
             end
         end
@@ -439,8 +440,9 @@ function AlchemyFactory:CraftIcyPrism()
     for i = 0,GetNumTradeSkills()
     do  
         if GetTradeSkillInfo(i) == craftName then
-            CloseTradeSkill()
+            SelectTradeSkill(i)
             DoTradeSkill(i)
+            CloseTradeSkill()
             return
         end
     end
