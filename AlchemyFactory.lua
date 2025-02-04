@@ -99,6 +99,26 @@ AlchemyFactory.CONSTANT = {
         DRAGONS_EYE = {
             name = 'Dragon\'s Eye',
             ID = 42225
+        },
+        COBALT_ORE = {
+            name = 'Cobalt Ore',
+            ID = 36909
+        },
+        SARONITE_ORE = {
+            name = 'Saronite Ore',
+            ID = 36909
+        },
+        BLOODSTONE = {
+            name = 'Bloodstone',
+            ID = 36917
+        },
+        SUN_CRYSTAL = {
+            name = 'Sun Crystal',
+            ID = 36920
+        },
+        HUGE_CITRINE = {
+            name = 'Huge Citrine',
+            ID = 36929
         }
     },
     ROLES = {
@@ -525,7 +545,8 @@ end
 
 function AlchemyFactory:WithdrawEpicGemsFromGuildBank()
     local items = AlchemyFactory.CONSTANT.ITEM
-    local stringsToMatch = {items.CARDINAL_RUBY.name, items.KINGS_AMBER.name, items.AMETRINE.name, items.DREADSTONE.name, items.EYE_OF_ZUL.name, items.MAJESTIC_ZIRCON.name, items.DRAGONS_EYE.name }
+    local stringsToMatch = {items.CARDINAL_RUBY.name, items.KINGS_AMBER.name, items.AMETRINE.name, items.DREADSTONE.name, items.EYE_OF_ZUL.name, items.MAJESTIC_ZIRCON.name, items.DRAGONS_EYE.name, items.BLOODSTONE.name, items.HUGE_CITRINE.name, items.SUN_CRYSTAL.name, items.COBALT_ORE.name, items.SARONITE_ORE.name }
+
 
     AlchemyFactory:DoWithdrawByItemNameListGuildBank({stringsToMatch, 1})    
 end
@@ -570,7 +591,7 @@ end
 
 function AlchemyFactory:DepositEpicGemsToGuildBank()
     local items = AlchemyFactory.CONSTANT.ITEM
-    local stringsToMatch = {items.CARDINAL_RUBY.name, items.KINGS_AMBER.name, items.AMETRINE.name, items.DREADSTONE.name, items.EYE_OF_ZUL.name, items.MAJESTIC_ZIRCON.name, items.DRAGONS_EYE.name }
+    local stringsToMatch = {items.CARDINAL_RUBY.name, items.KINGS_AMBER.name, items.AMETRINE.name, items.DREADSTONE.name, items.EYE_OF_ZUL.name, items.MAJESTIC_ZIRCON.name, items.DRAGONS_EYE.name, items.BLOODSTONE.name, items.HUGE_CITRINE.name, items.SUN_CRYSTAL.name, items.COBALT_ORE.name, items.SARONITE_ORE.name }
 
     AlchemyFactory:DoDepositByItemNameListIntoGuildBank({stringsToMatch, 0, 1})
 end
